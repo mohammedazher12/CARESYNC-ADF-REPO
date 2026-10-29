@@ -3,19 +3,39 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Set variable1",
+				"name": "Set start time",
 				"type": "SetVariable",
 				"dependsOn": [],
 				"policy": {
 					"secureOutput": false,
 					"secureInput": false
 				},
-				"userProperties": []
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "start_time",
+					"value": {
+						"value": "@formatDateTime(utcNow('yyy.MM.dd_HH:mm:ss'))",
+						"type": "Expression"
+					}
+				}
 			},
 			{
-				"name": "Copy data1",
+				"name": "sourcet to landing inejection",
 				"type": "Copy",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "read all details",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set start time",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -25,7 +45,80 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"enableStaging": false
+					"source": {
+						"type": "PostgreSqlV2Source",
+						"query": {
+							"value": "select * from public.@{activity('read all details').output.firstRow.source_table_name}",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_PostgreSqlTable1",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_sink_Parquet1",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "landing",
+							"folder": {
+								"value": "@concat(\n    activity('read all details').output.firstRow.source_system,\n    '/',\n    activity('read all details').output.firstRow.source_table_name,\n    '/',\n    variables('start_time')\n)",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "read all details",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "select * from ctrl.table_config where table_id=@{pipeline().parameters.table_id}",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_AzureSqlTable_metadata",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": true
 				}
 			}
 		],
@@ -33,6 +126,11 @@
 			"table_id": {
 				"type": "string",
 				"defaultValue": "1"
+			}
+		},
+		"variables": {
+			"start_time": {
+				"type": "String"
 			}
 		},
 		"annotations": []
