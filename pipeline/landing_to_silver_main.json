@@ -115,7 +115,11 @@
 							"outputs": [
 								{
 									"referenceName": "ds_neon_Parquet1",
-									"type": "DatasetReference"
+									"type": "DatasetReference",
+									"parameters": {
+										"container": "landing",
+										"folder": "test"
+									}
 								}
 							]
 						}
