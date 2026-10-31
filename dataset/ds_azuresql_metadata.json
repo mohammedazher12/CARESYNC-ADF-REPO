@@ -1,5 +1,5 @@
 {
-	"name": "ds_AzureSqlTable_metadata",
+	"name": "ds_azuresql_metadata",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "ls_azuresqlmetadata",
