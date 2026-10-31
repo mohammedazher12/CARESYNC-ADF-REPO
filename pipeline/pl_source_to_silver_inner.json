@@ -1,5 +1,5 @@
 {
-	"name": "landing_to_silver_inner",
+	"name": "pl_source_to_silver_inner",
 	"properties": {
 		"activities": [
 			{
@@ -14,7 +14,7 @@
 				"typeProperties": {
 					"variableName": "start_time",
 					"value": {
-						"value": "@formatDateTime(utcNow(),'yyy.MM.dd_HH:mm:ss')",
+						"value": "@formatDateTime(utcNow(),'yyy.MM.dd_HH:mm:ss')\n",
 						"type": "Expression"
 					}
 				}
@@ -22,9 +22,11 @@
 			{
 				"name": "sourcet to landing inejection",
 				"type": "Copy",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
-						"activity": "read all details",
+						"activity": "read table details",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -74,13 +76,13 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "ds_PostgreSqlTable1",
+						"referenceName": "ds_postgres",
 						"type": "DatasetReference"
 					}
 				],
 				"outputs": [
 					{
-						"referenceName": "ds_sink_Parquet1",
+						"referenceName": "ds_adls_parquet",
 						"type": "DatasetReference",
 						"parameters": {
 							"container": "landing",
@@ -93,7 +95,7 @@
 				]
 			},
 			{
-				"name": "read all details",
+				"name": "read table details",
 				"type": "Lookup",
 				"dependsOn": [],
 				"policy": {
@@ -108,17 +110,46 @@
 					"source": {
 						"type": "AzureSqlSource",
 						"sqlReaderQuery": {
-							"value": "select * from ctrl.table_config where table_id=@{pipeline().parameters.table_id}",
+							"value": "SELECT * FROM ctrl.table_config WHERE table_id = @{pipeline().parameters.table_id}",
 							"type": "Expression"
 						},
 						"queryTimeout": "02:00:00",
 						"partitionOption": "None"
 					},
 					"dataset": {
-						"referenceName": "ds_AzureSqlTable_metadata",
+						"referenceName": "ds_azuresql_metadata",
 						"type": "DatasetReference"
 					},
 					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "landing to bronze",
+				"type": "DatabricksNotebook",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "sourcet to landing inejection",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Repos/mabduljab1@alumno.uned.es/CARESYNC-DB-REPO/landing_to_bronze"
+				},
+				"linkedServiceName": {
+					"referenceName": "ls_Db",
+					"type": "LinkedServiceReference"
 				}
 			}
 		],
