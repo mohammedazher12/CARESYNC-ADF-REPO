@@ -124,8 +124,6 @@
 			{
 				"name": "landing to bronze",
 				"type": "DatabricksNotebook",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "source to landing",
@@ -143,7 +141,46 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"notebookPath": "/Repos/mabduljab1@alumno.uned.es/CARESYNC-DB-REPO/landing_to_bronze"
+					"notebookPath": "/Repos/mabduljab1@alumno.uned.es/CARESYNC-DB-REPO/landing_to_bronze",
+					"baseParameters": {
+						"source_system": {
+							"value": "@activity('read table details').output.firstRow.source_system",
+							"type": "Expression"
+						},
+						"table_name": "@activity('read table details').output.firstRow.bronze_table_name",
+						"landing_timestamp": "@variables('start_time')"
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "ls_Db",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "bronze to silver",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "landing to bronze",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Repos/mabduljab1@alumno.uned.es/CARESYNC-DB-REPO/bronze_to_silver",
+					"baseParameters": {
+						"table_name": "@activity('read table details').output.firstRow.bronze_table_name",
+						"landing_timestamp": "@variables('start_time')"
+					}
 				},
 				"linkedServiceName": {
 					"referenceName": "ls_Db",
