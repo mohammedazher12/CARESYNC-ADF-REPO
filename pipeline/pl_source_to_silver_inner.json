@@ -20,10 +20,8 @@
 				}
 			},
 			{
-				"name": "sourcet to landing inejection",
+				"name": "source to landing",
 				"type": "Copy",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "read table details",
@@ -50,7 +48,7 @@
 					"source": {
 						"type": "PostgreSqlV2Source",
 						"query": {
-							"value": "select * from public.@{activity('read all details').output.firstRow.source_table_name}",
+							"value": "select * from @{activity('read table details').output.firstRow.source_schema_name}.@{activity('read table details').output.firstRow.source_table_name}",
 							"type": "Expression"
 						},
 						"queryTimeout": "02:00:00"
@@ -87,7 +85,7 @@
 						"parameters": {
 							"container": "landing",
 							"folder": {
-								"value": "@concat(\n    activity('read all details').output.firstRow.source_system,\n    '/',\n    activity('read all details').output.firstRow.source_table_name,\n    '/',\n    variables('start_time')\n)",
+								"value": "@concat(activity('read table details').output.firstRow.source_system,'/',activity('read table details').output.firstRow.source_table_name,'/',variables('start_time'))",
 								"type": "Expression"
 							}
 						}
@@ -130,7 +128,7 @@
 				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
-						"activity": "sourcet to landing inejection",
+						"activity": "source to landing",
 						"dependencyConditions": [
 							"Succeeded"
 						]
